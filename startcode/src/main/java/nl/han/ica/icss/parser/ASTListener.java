@@ -44,6 +44,21 @@ public class ASTListener extends ICSSBaseListener {
 	}
 
 	@Override
+	public void enterVariableAssignment(ICSSParser.VariableAssignmentContext ctx) {
+		VariableAssignment variableAssignment = new VariableAssignment();
+		variableAssignment.name = new VariableReference(ctx.CAPITAL_IDENT().getText());
+		variableAssignment.expression = createExpression(ctx.value());
+
+		currentContainer.push(variableAssignment);
+	}
+
+	@Override
+	public void exitVariableAssignment(ICSSParser.VariableAssignmentContext ctx) {
+		VariableAssignment node = (VariableAssignment) currentContainer.pop();
+		currentContainer.peek().addChild(node);
+	}
+
+	@Override
 	public void enterStylerule(ICSSParser.StyleruleContext ctx) {
 		Stylerule node = new Stylerule();
 		currentContainer.push(node);
@@ -83,6 +98,7 @@ public class ASTListener extends ICSSBaseListener {
 		}
 	}
 
+	//Hulp methode om de juiste expression te krijgen.
 	private Expression createExpression(ICSSParser.ValueContext ctx) {
 		if (ctx.COLOR() != null) {
 			return new ColorLiteral(ctx.COLOR().getText());
@@ -103,6 +119,10 @@ public class ASTListener extends ICSSBaseListener {
 		if (ctx.TRUE() != null || ctx.FALSE() != null) {
 			return new BoolLiteral(Boolean.parseBoolean(ctx.getText()));
 		}
+		if (ctx.variable() != null) {
+			return new VariableReference(ctx.variable().getText());
+		}
+
 		throw new RuntimeException("Unknown value");
 	}
 }
