@@ -51,5 +51,8 @@ declaration: variable COLON value SEMICOLON;
 
 tag: ID_IDENT | CLASS_IDENT | LOWER_IDENT | CAPITAL_IDENT;
 variable: CAPITAL_IDENT | LOWER_IDENT;
-value: TRUE | FALSE | PIXELSIZE | PERCENTAGE | SCALAR | COLOR | variable;
+value: expr;
+
+expr:  expr MUL expr | expr PLUS expr | expr MIN expr | basic;
+basic: TRUE | FALSE | PIXELSIZE | PERCENTAGE | SCALAR | COLOR | variable;
 

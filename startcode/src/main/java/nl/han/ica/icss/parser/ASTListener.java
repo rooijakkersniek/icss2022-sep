@@ -8,6 +8,9 @@ import nl.han.ica.icss.ast.literals.ColorLiteral;
 import nl.han.ica.icss.ast.literals.PercentageLiteral;
 import nl.han.ica.icss.ast.literals.PixelLiteral;
 import nl.han.ica.icss.ast.literals.ScalarLiteral;
+import nl.han.ica.icss.ast.operations.AddOperation;
+import nl.han.ica.icss.ast.operations.MultiplyOperation;
+import nl.han.ica.icss.ast.operations.SubtractOperation;
 import nl.han.ica.icss.ast.selectors.ClassSelector;
 import nl.han.ica.icss.ast.selectors.IdSelector;
 import nl.han.ica.icss.ast.selectors.TagSelector;
@@ -47,9 +50,13 @@ public class ASTListener extends ICSSBaseListener {
 	public void enterVariableAssignment(ICSSParser.VariableAssignmentContext ctx) {
 		VariableAssignment variableAssignment = new VariableAssignment();
 		variableAssignment.name = new VariableReference(ctx.CAPITAL_IDENT().getText());
-		variableAssignment.expression = createExpression(ctx.value());
+        try {
+            variableAssignment.expression = createExpression(ctx.value().expr());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
-		currentContainer.push(variableAssignment);
+        currentContainer.push(variableAssignment);
 	}
 
 	@Override
@@ -74,8 +81,12 @@ public class ASTListener extends ICSSBaseListener {
 	public void enterDeclaration(ICSSParser.DeclarationContext ctx) {
 		Declaration declaration = new Declaration();
 		declaration.property = (new PropertyName(ctx.variable().getText()));
-		declaration.expression = createExpression(ctx.value());
-		currentContainer.push(declaration);
+        try {
+            declaration.expression = createExpression(ctx.value().expr());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        currentContainer.push(declaration);
 	}
 
 	@Override
@@ -98,8 +109,28 @@ public class ASTListener extends ICSSBaseListener {
 		}
 	}
 
-	//Hulp methode om de juiste expression te krijgen.
-	private Expression createExpression(ICSSParser.ValueContext ctx) {
+	// Recursive methode die de expressions opzet.
+	private Expression createExpression(ICSSParser.ExprContext ctx) throws Exception {
+		if(ctx.getChildCount() == 3) {
+			Expression left = createExpression(ctx.expr(0));
+			Expression right = createExpression(ctx.expr(1));
+			String operator = ctx.getChild(1).getText();
+
+			switch (operator) {
+				case "+": return new AddOperation(left, right);
+				case "-": return new SubtractOperation(left, right);
+				case "*": return new MultiplyOperation(left, right);
+			}
+		}
+
+		if(ctx.basic() != null) {
+			return createBasicExpression(ctx.basic());
+		}
+		throw new Exception("Unexpected");
+	}
+
+	//Hulp methode om de juiste "basic" expression te krijgen.
+	private Expression createBasicExpression(ICSSParser.BasicContext ctx) {
 		if (ctx.COLOR() != null) {
 			return new ColorLiteral(ctx.COLOR().getText());
 		}
