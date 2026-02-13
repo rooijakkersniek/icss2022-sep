@@ -106,6 +106,37 @@ public class ASTListener extends ICSSBaseListener {
 			rule.selectors.add(new ClassSelector(text));
 		} else if (ctx.ID_IDENT() != null) {
 			rule.selectors.add(new IdSelector(text));
+		} else if (ctx.CAPITAL_IDENT() != null) {
+			rule.selectors.add(new TagSelector(text));
+		}
+	}
+
+	@Override
+	public void enterIfclause(ICSSParser.IfclauseContext ctx) {
+		IfClause ifClause = new IfClause();
+		try	{
+			ifClause.conditionalExpression = createExpression(ctx.expr());
+		} catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+		currentContainer.push(ifClause);
+    }
+
+	public void exitIfclause(ICSSParser.IfclauseContext ctx) {
+		IfClause ifClause = (IfClause) currentContainer.pop();
+		currentContainer.peek().addChild(ifClause);
+	}
+
+	public void enterElseclause(ICSSParser.ElseclauseContext ctx) {
+		ElseClause elseClause = new ElseClause();
+		currentContainer.push(elseClause);
+	}
+
+	public void exitElseclause(ICSSParser.ElseclauseContext ctx) {
+		ElseClause elseClause = (ElseClause) currentContainer.pop();
+
+		if(currentContainer.peek() instanceof IfClause) {
+			((IfClause) currentContainer.peek()).elseClause = elseClause;
 		}
 	}
 
