@@ -4,6 +4,7 @@ import nl.han.ica.icss.ast.AST;
 import nl.han.ica.icss.ast.ASTNode;
 import nl.han.ica.icss.ast.Declaration;
 import nl.han.ica.icss.ast.Expression;
+import nl.han.ica.icss.ast.IfClause;
 import nl.han.ica.icss.ast.Operation;
 import nl.han.ica.icss.ast.VariableAssignment;
 import nl.han.ica.icss.ast.VariableReference;
@@ -46,6 +47,18 @@ public class Checker {
 
         if(node instanceof Operation){
             checkOperations((Operation) node);
+        }
+
+        if(node instanceof IfClause){
+            addScope();
+            for(ASTNode child : node.getChildren()) {
+                checkNode(child);
+            }
+            closeScope();
+        } else {
+            for(ASTNode child : node.getChildren()) {
+                checkNode(child);
+            }
         }
     }
 
