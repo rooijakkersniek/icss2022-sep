@@ -2,6 +2,7 @@ package nl.han.ica.icss.checker;
 
 import nl.han.ica.icss.ast.AST;
 import nl.han.ica.icss.ast.ASTNode;
+import nl.han.ica.icss.ast.Declaration;
 import nl.han.ica.icss.ast.Expression;
 import nl.han.ica.icss.ast.Operation;
 import nl.han.ica.icss.ast.VariableAssignment;
@@ -35,6 +36,10 @@ public class Checker {
             addVariableAssignment((VariableAssignment) node);
         }
 
+        if(node instanceof Declaration) {
+            checkForTypeCompatibility((Declaration) node);
+        }
+
         if(node instanceof VariableReference) {
             checkForExistenceVariableReference((VariableReference) node);
         }
@@ -48,6 +53,27 @@ public class Checker {
         String name = variableAssignment.name.name;
         ExpressionType type = getExpressionType(variableAssignment.expression);
         variableTypes.get(0).put(name, type);
+    }
+
+    private void checkForTypeCompatibility(Declaration declaration) {
+        ExpressionType valueType = getExpressionType(declaration.expression);
+        String property = declaration.property.name;
+        boolean isValid = true;
+
+        switch (property) {
+            case "color":
+                isValid = (valueType == ExpressionType.COLOR);
+                break;
+
+            case "width":
+            case "height":
+                isValid = (valueType == ExpressionType.PIXEL || valueType == ExpressionType.PERCENTAGE);
+                break;
+        }
+
+        if(!isValid) {
+            declaration.setError("Invalid type for property " + property);
+        }
     }
 
     private void checkForExistenceVariableReference(VariableReference variableReference) {
