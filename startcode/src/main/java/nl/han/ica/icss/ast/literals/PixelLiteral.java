@@ -27,6 +27,10 @@ public class PixelLiteral extends Literal {
         return value == that.value;
     }
 
+    public PixelLiteral add(PixelLiteral literal) {
+        return new PixelLiteral(value + literal.value);
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(value);
