@@ -154,6 +154,25 @@ public class CheckerTest {
         assertEquals("#ff0000", ((ColorLiteral) simplifiedExpression).value);
     }
 
+    @Test
+    void evaluatorTestFull() throws IOException {
+        AST sut = parseTestFile("evaluator_test_full.icss");
+        Evaluator evaluator = new Evaluator();
+
+        System.out.println("stylesheet before: " + sut);
+
+        evaluator.apply(sut);
+
+        var stylerule = sut.root.getChildren().get(0);
+        System.out.println("stylerule after : " + stylerule);
+        var simplifiedStatement = stylerule.getChildren().get(1);
+        System.out.println("statement after : " + simplifiedStatement);
+        var simplifiedExpression = simplifiedStatement.getChildren().get(1);
+        System.out.println("expression after: " + simplifiedExpression);
+
+        assertEquals(200, ((PixelLiteral) simplifiedExpression).value);
+    }
+
     private boolean hasErrors(ASTNode node) {
         if (node.getError() != null) {
             return true;
