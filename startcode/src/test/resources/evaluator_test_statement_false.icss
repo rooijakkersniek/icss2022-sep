@@ -1,0 +1,7 @@
+p{
+    if[AdjustColor] {
+        background-color: #ff0000;
+    } else {
+        background-color: #000000;
+    }
+}

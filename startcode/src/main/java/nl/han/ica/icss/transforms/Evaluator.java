@@ -11,6 +11,7 @@ import nl.han.ica.icss.ast.operations.SubtractOperation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 public class Evaluator implements Transform {
@@ -47,17 +48,40 @@ public class Evaluator implements Transform {
             } else if(node instanceof IfClause){
                 processed.addAll(applyIfClause((IfClause)node));
             } else if(node instanceof Declaration){
-                evalExpression(((Declaration) node).expression );
+                Declaration declaration = (Declaration) node;
+                declaration.expression = evalExpression(declaration.expression );
+                processed.add(declaration);
             }
         }
-        stylerule.body = new ArrayList<>(processed);
+        LinkedList<ASTNode> lastNodes = getLastNodes(processed);
+        stylerule.body = new ArrayList<>(lastNodes);
         variableValues.pop();
     }
 
+    private LinkedList<ASTNode> getLastNodes(LinkedList<ASTNode> processed){
+        LinkedList<ASTNode> last = new LinkedList<>();
+        HashSet<String> seen = new HashSet<>();
+
+        for (int i = processed.size() - 1; i >= 0; i--) {
+            ASTNode node = processed.get(i);
+            if (node instanceof Declaration) {
+                String name = ((Declaration) node).property.name;
+                if (seen.add(name)) {
+                    last.addFirst(node);
+                }
+            } else {
+                last.addFirst(node);
+            }
+        }
+        return last;
+    }
+
     private ArrayList<ASTNode> applyIfClause(IfClause node) {
+        Literal condition = evalExpression(node.conditionalExpression);
         ArrayList<ASTNode> body = null;
-        if(node.conditionalExpression instanceof BoolLiteral){
-            body =  node.body;
+
+        if(condition instanceof BoolLiteral && ((BoolLiteral) condition).value){
+            body = node.body;
         } else if(node.elseClause != null) {
             body = node.elseClause.body;
         }
@@ -89,10 +113,6 @@ public class Evaluator implements Transform {
     }
 
     private Literal evalExpression(Expression expression) {
-        if(expression instanceof Literal){
-            return (Literal) expression;
-        }
-
         if(expression instanceof VariableReference) {
             for(HashMap<String, Literal> map : variableValues) {
                 if(map.containsKey(((VariableReference) expression).name)) {
@@ -100,6 +120,10 @@ public class Evaluator implements Transform {
                 }
             }
             return new ScalarLiteral(0);
+        }
+
+        if(expression instanceof Literal){
+            return (Literal) expression;
         }
 
         if(expression instanceof AddOperation) {
@@ -122,7 +146,7 @@ public class Evaluator implements Transform {
 
     private Literal add(Literal lhs, Literal rhs) {
         if(lhs instanceof PixelLiteral) {
-            return new PixelLiteral(((PixelLiteral) lhs).value+ ((PixelLiteral) rhs).value );
+            return new PixelLiteral((((PixelLiteral) lhs).value) + (((PixelLiteral) rhs).value));
         }
         if(rhs instanceof ScalarLiteral) {
             return new ScalarLiteral(((ScalarLiteral) lhs).value + ((ScalarLiteral) rhs).value);

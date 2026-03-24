@@ -1,0 +1,10 @@
+
+
+p{
+    AdjustColor := TRUE;
+    if[TRUE] {
+        background-color: #ff0000;
+    } else {
+        background-color: #000000;
+    }
+}
